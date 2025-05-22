@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tonic Thought Studio - Dürer's Sigil Weaver</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            margin-top: 20px; 
+            background-color: #f0f0f0; /* A subtle, calm background */
+            color: #333;
+        }
+        h1 {
+            color: #2c3e50; /* A deeper, thoughtful color for the title */
+        }
+        #controls { 
+            margin-bottom: 20px; 
+            display: flex; 
+            gap: 15px; /* More spacing */
+            align-items: center; 
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        #phraseInput { 
+            width: 350px; /* Wider input */
+            padding: 10px; 
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        #generateButton, #resetButton {
+            padding: 10px 15px;
+            font-size: 1em;
+            color: white;
+            background-color: #3498db; /* A more engaging blue */
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        #generateButton:hover, #resetButton:hover {
+            background-color: #2980b9;
+        }
+        #sequenceDisplay { 
+            margin-bottom: 15px; 
+            font-weight: bold; 
+            font-size: 1.1em;
+            min-height: 1.5em; 
+            color: #555;
+        }
+        #sigilCanvas { 
+            border: 2px solid #7f8c8d; /* A more defined border */
+            cursor: crosshair; /* Indicates clickability for drawing */
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-radius: 4px;
+        }
+        .button-container { 
+            margin-top: 20px; 
+        }
+        .instruction {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Dürer's Square Sigil Weaver</h1>
+    <p class="instruction">Enter your intention. Vowels (A, E, I, O, U) will be removed. Click "Generate Sequence".</p>
+    <p class="instruction">Then, click the numbers on the square in the order of your sequence to draw your sigil.</p>
+
+    <div id="controls">
+        <label for="phraseInput">Intention:</label>
+        <input type="text" id="phraseInput" placeholder="e.g., My Creative Power Flows">
+        <button id="generateButton">Generate Sequence</button>
+    </div>
+
+    <div id="sequenceDisplay">Sequence: [ ]</div>
+
+    <canvas id="sigilCanvas" width="400" height="400"></canvas>
+
+    <div class="button-container">
+        <button id="resetButton">Reset Drawing</button>
+    </div>
+
+    <script>
+        // --- Constants & Data ---
+        const DURER_SQUARE = [
+            [16,  3,  2, 13],
+            [ 5, 10, 11,  8],
+            [ 9,  6,  7, 12],
+            [ 4, 15, 14,  1]
+        ];
+        const VOWELS = "AEIOU"; // Case-insensitive removal
+
+        // --- State Variables ---
+        let currentSequence = [];
+        let drawnPath = []; // To store {x, y} points of the sigil line
+        let currentStep = 0; // Tracks which number in the sequence the user should click next
+
+        // --- DOM Elements ---
+        const phraseInput = document.getElementById('phraseInput');
+        const generateButton = document.getElementById('generateButton');
+        const sequenceDisplay = document.getElementById('sequenceDisplay');
+        const sigilCanvas = document.getElementById('sigilCanvas');
+        const resetButton = document.getElementById('resetButton');
+        const ctx = sigilCanvas.getContext('2d');
+
+        // --- Core Logic Functions (to be implemented) ---
+
+        function removeVowelsAndNonAlpha(text) {
+            // Implementation: Convert to uppercase, remove non-alphabetic, remove vowels
+            // Example: "CREATIVITY!" -> "CRTVTY"
+            let upperText = text.toUpperCase();
+            let alphaOnly = "";
+            for (let char of upperText) {
+                if (char >= 'A' && char <= 'Z') {
+                    alphaOnly += char;
+                }
+            }
+            let consonantsOnly = "";
+            for (let char of alphaOnly) {
+                if (VOWELS.indexOf(char) === -1) { // If not a vowel
+                    consonantsOnly += char;
+                }
+            }
+            return consonantsOnly;
+        }
+
+        function cipherLetter(letter) {
+            // Implementation: A=1...I=9, J=1...
+            const charCodeA = 'A'.charCodeAt(0);
+            const letterPos = letter.charCodeAt(0) - charCodeA; // 0 for A, 1 for B, etc.
+            return (letterPos % 9) + 1;
+        }
+
+        function generateSequence() {
+            const phrase = phraseInput.value;
+            if (!phrase.trim()) {
+                sequenceDisplay.textContent = "Sequence: [Please enter a phrase]";
+                currentSequence = [];
+                resetDrawingState();
+                drawDurerSquare(); // Redraw clean square
+                return;
+            }
+            const processedPhrase = removeVowelsAndNonAlpha(phrase);
+            if (!processedPhrase) {
+                 sequenceDisplay.textContent = "Sequence: [No consonants found after vowel removal]";
+                 currentSequence = [];
+                 resetDrawingState();
+                 drawDurerSquare();
+                 return;
+            }
+            currentSequence = Array.from(processedPhrase).map(cipherLetter);
+            sequenceDisplay.textContent = `Sequence: [${currentSequence.join(', ')}]`;
+            resetDrawingState(); // Clear previous drawing, reset step
+            drawDurerSquare(); // Draw the square, ready for clicking
+            // Optional: Highlight the first number in sequence on the square
+            if (currentSequence.length > 0) {
+                highlightNextNumberOnSquare(currentSequence[0]);
+            }
+        }
+        
+        function resetDrawingState() {
+            currentStep = 0;
+            drawnPath = [];
+        }
+
+        // --- Canvas Drawing Functions (to be implemented) ---
+        const cellSize = sigilCanvas.width / 4; // Dürer's is 4x4
+
+        function getCellCenter(row, col) {
+            return {
+                x: col * cellSize + cellSize / 2,
+                y: row * cellSize + cellSize / 2
+            };
+        }
+        
+        function findNumberPosition(number) {
+            for (let r = 0; r < 4; r++) {
+                for (let c = 0; c < 4; c++) {
+                    if (DURER_SQUARE[r][c] === number) {
+                        return { row: r, col: c };
+                    }
+                }
+            }
+            return null; // Should not happen if sequence numbers are valid
+        }
+
+        function drawDurerSquare() {
+            ctx.clearRect(0, 0, sigilCanvas.width, sigilCanvas.height);
+            ctx.strokeStyle = '#7f8c8d'; // Grid line color
+            ctx.lineWidth = 1;
+            ctx.font = `${cellSize / 3}px sans-serif`; // Responsive font size
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            for (let r = 0; r < 4; r++) {
+                for (let c = 0; c < 4; c++) {
+                    // Draw cell
+                    ctx.strokeRect(c * cellSize, r * cellSize, cellSize, cellSize);
+                    // Draw number
+                    const number = DURER_SQUARE[r][c];
+                    const center = getCellCenter(r,c);
+                    ctx.fillStyle = '#333'; // Number color
+                    ctx.fillText(number.toString(), center.x, center.y);
+                }
+            }
+        }
+        
+        function highlightNextNumberOnSquare(number) {
+            // This could draw a subtle glow or different color box around the next expected number
+            // For now, we can just rely on the user following their displayed sequence
+            // Or, perhaps, when a number is clicked, it's "activated" visually.
+            // Let's keep it simple: the drawing itself is the highlight.
+        }
+
+        function drawSigilSegment(fromPos, toPos) {
+            ctx.beginPath();
+            ctx.moveTo(fromPos.x, fromPos.y);
+            ctx.lineTo(toPos.x, toPos.y);
+            ctx.strokeStyle = '#e74c3c'; // A vibrant sigil line color (e.g., red)
+            ctx.lineWidth = 3; // Thicker line for the sigil
+            ctx.stroke();
+        }
+
+        function drawStartMarker(pos) {
+            ctx.beginPath();
+            ctx.arc(pos.x, pos.y, cellSize / 8, 0, 2 * Math.PI); // Small circle
+            ctx.fillStyle = '#e74c3c'; // Match sigil color
+            ctx.fill();
+        }
+
+        function drawEndMarker(pos) {
+            ctx.beginPath();
+            const barLength = cellSize / 4;
+            // Simple perpendicular bar - this needs refinement based on line angle
+            // For simplicity, let's make a small X or a filled square for now
+            ctx.fillRect(pos.x - barLength/4, pos.y - barLength/4, barLength/2, barLength/2);
+            ctx.fillStyle = '#e74c3c';
+        }
+
+        function redrawDrawnPath() {
+            if (drawnPath.length === 0) return;
+
+            const firstNumPos = findNumberPosition(currentSequence[0]);
+            if (firstNumPos) drawStartMarker(getCellCenter(firstNumPos.row, firstNumPos.col));
+            
+            for (let i = 0; i < drawnPath.length -1; i++) {
+                 const fromNum = currentSequence[i];
+                 const toNum = currentSequence[i+1];
+                 const fromPos = findNumberPosition(fromNum);
+                 const toPos = findNumberPosition(toNum);
+                 if (fromPos && toPos) {
+                    drawSigilSegment(getCellCenter(fromPos.row, fromPos.col), getCellCenter(toPos.row, toPos.col));
+                 }
+            }
+
+            if (currentStep === currentSequence.length && currentSequence.length > 0) {
+                const lastNumPos = findNumberPosition(currentSequence[currentSequence.length - 1]);
+                if (lastNumPos) drawEndMarker(getCellCenter(lastNumPos.row, lastNumPos.col));
+            }
+        }
+
+
+        // --- Event Handlers ---
+        generateButton.addEventListener('click', generateSequence);
+        
+        resetButton.addEventListener('click', () => {
+            phraseInput.value = "";
+            sequenceDisplay.textContent = "Sequence: [ ]";
+            currentSequence = [];
+            resetDrawingState();
+            drawDurerSquare();
+        });
+
+        sigilCanvas.addEventListener('click', (event) => {
+            if (currentSequence.length === 0 || currentStep >= currentSequence.length) {
+                return; // No sequence or drawing is complete
+            }
+
+            const rect = sigilCanvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+
+            const clickedCol = Math.floor(x / cellSize);
+            const clickedRow = Math.floor(y / cellSize);
+
+            if (clickedRow < 0 || clickedRow > 3 || clickedCol < 0 || clickedCol > 3) return; // Click outside grid
+
+            const clickedNumber = DURER_SQUARE[clickedRow][clickedCol];
+            const expectedNumber = currentSequence[currentStep];
+
+            if (clickedNumber === expectedNumber) {
+                const currentPos = getCellCenter(clickedRow, clickedCol);
+                
+                if (currentStep === 0) { // First click in the sequence
+                    drawDurerSquare(); // Redraw clean square first
+                    drawStartMarker(currentPos);
+                    drawnPath.push(currentPos); // Store position for drawing
+                } else {
+                    const prevClickedNumber = currentSequence[currentStep - 1];
+                    const prevPosDetails = findNumberPosition(prevClickedNumber);
+                    if (prevPosDetails) { // Should always be true
+                        const prevPos = getCellCenter(prevPosDetails.row, prevPosDetails.col);
+                        drawSigilSegment(prevPos, currentPos);
+                        drawnPath.push(currentPos);
+                    }
+                }
+                
+                currentStep++;
+
+                if (currentStep === currentSequence.length) { // Last number clicked
+                    drawEndMarker(currentPos);
+                    // Sigil complete!
+                } else {
+                    // Optional: Highlight next expected number, or simply wait for next click
+                }
+            } else {
+                // User clicked the wrong number. Maybe provide feedback?
+                // For now, we'll just ignore incorrect clicks silently.
+            }
+        });
+
+        // --- Initial Setup ---
+        window.onload = () => {
+            drawDurerSquare();
+        };
+
+    </script>
+</body>
+</html>

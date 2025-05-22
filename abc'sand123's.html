@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sigil Jiggler - Weave Your Will</title>
+    <style>
+        /* Ethereal, Occult, Mystical Theme */
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Orbitron:wght@400;500&display=swap');
+
+        body {
+            background-color: #1a0929; /* Deep cosmic violet */
+            color: #e0cff0; /* Pale lavender mist */
+            font-family: 'Orbitron', sans-serif; /* Futuristic base font */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            background-color: rgba(12, 5, 25, 0.6); /* Darker, translucent nebula */
+            padding: 25px 35px;
+            border-radius: 20px;
+            box-shadow: 0 0 25px rgba(128, 0, 128, 0.6), 0 0 50px rgba(75, 0, 130, 0.4) inset, 0 0 5px #d4af37;
+            border: 1px solid rgba(212, 175, 55, 0.3); /* Faint gold border */
+            width: 95%;
+            max-width: 1100px;
+            display: grid;
+            grid-template-columns: 1fr 1.2fr; /* Slightly larger canvas column */
+            gap: 30px;
+        }
+
+        .column { display: flex; flex-direction: column; gap: 18px; }
+
+        h1 {
+            font-family: 'Cinzel Decorative', serif;
+            color: #d4af37; /* Occult Gold */
+            text-align: center;
+            grid-column: 1 / -1;
+            letter-spacing: 3px;
+            font-size: 2.5em;
+            text-shadow: 0 0 8px #d4af37, 0 0 15px #d4af37;
+            margin-bottom: 10px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: #c0c0c0; /* Silver accents */
+            font-size: 0.95em;
+        }
+
+        input[type="text"],
+        textarea,
+        select {
+            width: calc(100% - 24px);
+            padding: 10px 12px;
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid #503070; /* Amethyst border */
+            color: #e0cff0;
+            border-radius: 8px;
+            font-family: 'Orbitron', sans-serif;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        input[type="text"]:focus,
+        textarea:focus,
+        select:focus {
+            border-color: #d4af37;
+            box-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
+            outline: none;
+        }
+
+        textarea { min-height: 70px; resize: vertical; }
+
+        .output-field {
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px dashed #402860;
+            min-height: 22px;
+            font-family: 'Courier New', Courier, monospace;
+            color: #b090e0; /* Brighter purple for output */
+            word-wrap: break-word;
+            font-size: 0.9em;
+        }
+
+        .toggle-container { display: flex; align-items: center; gap: 10px; }
+
+        .toggle-switch { position: relative; display: inline-block; width: 50px; height: 26px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider-track { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #331a4d; transition: .4s; border-radius: 26px; border: 1px solid #d4af37;}
+        .slider-track:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: #e0cff0; transition: .4s; border-radius: 50%; }
+        input:checked + .slider-track { background-color: #7b68ee; /* Amethyst */ }
+        input:checked + .slider-track:before { transform: translateX(24px); }
+
+        .control-group { margin-bottom: 5px; }
+        .control-group label { display: inline-block; margin-right: 10px; }
+        input[type="range"] { width: calc(100% - 60px); vertical-align: middle; accent-color: #d4af37;}
+        input[type="color"] { vertical-align: middle; background: transparent; border:1px solid #503070; border-radius:5px; width: 40px; height:30px;}
+
+        canvas#sigilCanvas {
+            width: 100%;
+            height: auto;
+            aspect-ratio: 1 / 1;
+            background-color: rgba(0,0,0,0.4);
+            border: 2px solid #d4af37;
+            border-radius: 15px;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.3) inset;
+        }
+        #durerSquareVisual {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; border: 1px solid #503070; padding: 5px; margin-top:10px; border-radius: 5px;
+        }
+        #durerSquareVisual div {
+            text-align: center; padding: 8px 5px; border: 1px solid #331a4d; background-color: rgba(255,255,255,0.03); border-radius: 3px; font-size: 0.9em; transition: background-color 0.3s, color 0.3s;
+        }
+
+        button#igniteButton {
+            padding: 15px 25px;
+            background: linear-gradient(145deg, #d4af37, #a07020);
+            color: #1a0929;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Cinzel Decorative', serif;
+            font-size: 1.3em;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 12px #d4af37;
+            display: block;
+            width: 100%;
+            margin-top: 15px;
+        }
+        button#igniteButton:hover {
+            background: linear-gradient(145deg, #f0c040, #b08030);
+            box-shadow: 0 0 18px #f0c040, 0 0 8px #f0c040 inset;
+            transform: translateY(-2px) scale(1.01);
+        }
+
+        #geminiOutput {
+            grid-column: 1 / -1; text-align: center; margin-top: 20px; border: 2px dashed #d4af37; padding: 25px; border-radius: 15px; background-color: rgba(0,0,0,0.4);
+        }
+        #geminiOutput img { max-width: 80%; max-height: 350px; border: 1px solid #7b68ee; border-radius: 10px; margin-top:15px; box-shadow: 0 0 10px #7b68ee;}
+        #geminiOutput p { font-style: italic; color: #b090e0; margin-bottom: 10px;}
+
+        @media (max-width: 850px) {
+            .container { grid-template-columns: 1fr; }
+            h1 {font-size: 2em;}
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Sigil Jiggler</h1>
+
+        <div class="column" id="input-controls-column">
+            <div class="control-group">
+                <label for="intention">Whisper Your Will:</label>
+                <textarea id="intention" rows="3" placeholder="e.g., I manifest profound insight"></textarea>
+            </div>
+
+            <div class="control-group">
+                <label>Guardian's Verdict:</label>
+                <div id="guardianVerdict" class="output-field" style="color: #b090e0;">Awaiting your whisper...</div>
+            </div>
+
+            <div class="toggle-container">
+                <label for="essenceRefinement" title="Remove duplicate consonants for a more distilled essence.">Refine Essence:</label>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="essenceRefinement">
+                    <span class="slider-track"></span>
+                </label>
+            </div>
+
+            <div class="control-group">
+                <label>Consonant Core:</label>
+                <div id="consonantString" class="output-field"></div>
+            </div>
+
+            <div class="control-group">
+                <label>Numerical Path:</label>
+                <div id="numericalSequence" class="output-field"></div>
+            </div>
+            
+            <div class="toggle-container">
+                <label for="pathWeaving" title="Use Golden Flow (curved lines) or Direct Current (straight lines).">Path Weaving (Golden Flow):</label>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="pathWeaving">
+                    <span class="slider-track"></span>
+                </label>
+            </div>
+            
+            <div class="control-group">
+                <label for="lineWeight">Flow (Weight): <span id="lineWeightValue">5</span></label>
+                <input type="range" id="lineWeight" min="1" max="25" value="5">
+            </div>
+
+            <div class="control-group">
+                <label for="lineColor">Hue of Power:</label>
+                <input type="color" id="lineColor" value="#d4af37">
+            </div>
+
+            <div class="control-group">
+                <label for="rotation">Cosmic Orientation: <span id="rotationValue">0</span>°</label>
+                <input type="range" id="rotation" min="0" max="359" value="0">
+            </div>
+        </div>
+
+        <div class="column" id="sigil-display-column">
+            <label>Dürer's Canvas:</label>
+            <canvas id="sigilCanvas"></canvas>
+            <div id="durerSquareVisual"> <!-- Populated by JS --> </div>
+        </div>
+        
+        <button id="igniteButton" style="grid-column: 1 / -1;">Ignite Sigil</button>
+
+        <div id="geminiOutput">
+            <p>The Aether Awaits Your Creation...</p>
+            <img id="finalSigilImage" src="" alt="Final Sigil" style="display:none;">
+        </div>
+    </div>
+
+    <script>
+        // Constants
+        const DURER_SQUARE = [[16, 3, 2, 13], [5, 10, 11, 8], [9, 6, 7, 12], [4, 15, 14, 1]];
+        const DURER_SQUARE_COORDS = {}; 
+        const NEGATIVE_KEYWORDS = ['harm', 'curse', 'destroy', 'hate', 'kill', 'suffer', 'pain', 'bad', 'evil', 'hurt', 'negative', 'failure', 'lose', 'sick', 'broken'];
+
+        // DOM Elements
+        const intentionInput = document.getElementById('intention');
+        const guardianVerdictEl = document.getElementById('guardianVerdict');
+        const essenceRefinementToggle = document.getElementById('essenceRefinement');
+        const consonantStringEl = document.getElementById('consonantString');
+        const numericalSequenceEl = document.getElementById('numericalSequence');
+        const pathWeavingToggle = document.getElementById('pathWeaving');
+        const lineWeightSlider = document.getElementById('lineWeight');
+        const lineWeightValueEl = document.getElementById('lineWeightValue');
+        const lineColorPicker = document.getElementById('lineColor');
+        const rotationSlider = document.getElementById('rotation');
+        const rotationValueEl = document.getElementById('rotationValue');
+        const sigilCanvas = document.getElementById('sigilCanvas');
+        const ctx = sigilCanvas.getContext('2d');
+        const igniteButton = document.getElementById('igniteButton');
+        const geminiOutputEl = document.getElementById('geminiOutput');
+        const finalSigilImageEl = document.getElementById('finalSigilImage');
+        const durerSquareVisualEl = document.getElementById('durerSquareVisual');
+
+        let currentNumericalSequence = [];
+        let sigilPoints = [];
+
+        function initializeDurerSquareVisual() {
+            durerSquareVisualEl.innerHTML = '';
+            DURER_SQUARE.flat().forEach(num => {
+                const cell = document.createElement('div');
+                cell.textContent = num; cell.id = `durer-cell-${num}`;
+                durerSquareVisualEl.appendChild(cell);
+            });
+        }
+        
+        function highlightDurerPath(sequence) {
+            durerSquareVisualEl.querySelectorAll('div').forEach(cell => {
+                cell.style.backgroundColor = 'rgba(255,255,255,0.03)';
+                cell.style.fontWeight = 'normal'; cell.style.color = '#e0cff0';
+                cell.style.transform = 'scale(1)'; cell.style.boxShadow = 'none';
+            });
+            if (!sequence || sequence.length === 0) return;
+
+            sequence.forEach((num, index) => {
+                const cell = document.getElementById(`durer-cell-${num}`);
+                if (cell) {
+                    let bgColor = '#9f7fdf'; // Path Purple
+                    if (index === 0) bgColor = '#d4af37'; // Start Gold
+                    else if (index === sequence.length - 1 && sequence.length > 1) bgColor = '#7b68ee'; // End Amethyst
+                    
+                    cell.style.backgroundColor = bgColor;
+                    cell.style.fontWeight = 'bold'; cell.style.color = '#1a0929';
+                    cell.style.transform = 'scale(1.1)'; cell.style.boxShadow = `0 0 8px ${bgColor}`;
+                }
+            });
+        }
+
+        function guardianOfIntent(text) {
+            const cleanedText = text.toLowerCase().trim();
+            if (!cleanedText) {
+                guardianVerdictEl.textContent = "The void is silent. Whisper your will.";
+                guardianVerdictEl.style.color = "#b090e0";
+                return { positive: false, message: "Empty intention." };
+            }
+            for (const keyword of NEGATIVE_KEYWORDS) {
+                if (cleanedText.includes(keyword)) {
+                    guardianVerdictEl.textContent = "The currents favor creation, not corrosion. Refine your will towards the light.";
+                    guardianVerdictEl.style.color = "#ff6347"; // Tomato Red for warning
+                    return { positive: false, message: `Negative keyword: ${keyword}` };
+                }
+            }
+            guardianVerdictEl.textContent = "Your intention resonates clearly.";
+            guardianVerdictEl.style.color = "#66CDAA"; // Medium Aquamarine for positive
+            return { positive: true, message: "Intention is positive." };
+        }
+
+        function processIntention() {
+            const rawIntention = intentionInput.value;
+            const intentCheck = guardianOfIntent(rawIntention);
+
+            if ((!intentCheck.positive && rawIntention.length > 0) || !rawIntention) {
+                consonantStringEl.textContent = ""; numericalSequenceEl.textContent = "";
+                currentNumericalSequence = []; clearCanvas(); highlightDurerPath([]);
+                return;
+            }
+
+            let consonants = rawIntention.toUpperCase().replace(/[^A-Z]/g, '').replace(/[AEIOU]/g, '');
+            if (essenceRefinementToggle.checked) {
+                consonants = consonants.split('').filter((char, index, self) => self.indexOf(char) === index).join('');
+            }
+            consonantStringEl.textContent = consonants;
+
+            const numbers = consonants.split('').map(char => (char.charCodeAt(0) - 'A'.charCodeAt(0)) % 9 + 1);
+            currentNumericalSequence = numbers;
+            numericalSequenceEl.textContent = numbers.join(' · ');
+            
+            highlightDurerPath(currentNumericalSequence);
+            mapNumbersToPoints(); drawSigil();
+        }
+
+        function setupCanvas() {
+            const size = sigilCanvas.offsetWidth;
+            sigilCanvas.width = size; sigilCanvas.height = size;
+            
+            const cellSize = sigilCanvas.width / 4; const offset = cellSize / 2;
+            DURER_SQUARE.forEach((row, r) => row.forEach((num, c) => {
+                DURER_SQUARE_COORDS[num] = { x: c * cellSize + offset, y: r * cellSize + offset };
+            }));
+        }
+
+        function mapNumbersToPoints() {
+            sigilPoints = currentNumericalSequence.map(num => DURER_SQUARE_COORDS[num]).filter(p => p);
+        }
+        
+        function clearCanvas() { ctx.clearRect(0, 0, sigilCanvas.width, sigilCanvas.height); }
+
+        function drawDurerGridLines() { // Subtle grid lines on canvas
+            const cellSize = sigilCanvas.width / 4;
+            ctx.strokeStyle = "rgba(212, 175, 55, 0.1)"; ctx.lineWidth = 0.5;
+            for (let i = 1; i < 4; i++) {
+                ctx.beginPath(); ctx.moveTo(i * cellSize, 0); ctx.lineTo(i * cellSize, sigilCanvas.height); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(0, i * cellSize); ctx.lineTo(sigilCanvas.width, i * cellSize); ctx.stroke();
+            }
+        }
+
+        function drawSigil() {
+            clearCanvas(); drawDurerGridLines();
+            if (sigilPoints.length < 1) return; // Allow single point to be drawn (as a dot)
+
+            const rotationAngle = parseInt(rotationSlider.value) * (Math.PI / 180);
+            const centerX = sigilCanvas.width / 2; const centerY = sigilCanvas.height / 2;
+
+            ctx.save();
+            ctx.translate(centerX, centerY); ctx.rotate(rotationAngle); ctx.translate(-centerX, -centerY);
+
+            ctx.strokeStyle = lineColorPicker.value;
+            ctx.lineWidth = parseInt(lineWeightSlider.value);
+            ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+            
+            if (sigilPoints.length === 1) { // Draw a dot for single point
+                 ctx.beginPath();
+                 ctx.arc(sigilPoints[0].x, sigilPoints[0].y, ctx.lineWidth / 2, 0, Math.PI * 2);
+                 ctx.fillStyle = lineColorPicker.value;
+                 ctx.fill();
+            } else {
+                ctx.beginPath();
+                ctx.moveTo(sigilPoints[0].x, sigilPoints[0].y);
+                for (let i = 1; i < sigilPoints.length; i++) {
+                    const p1 = sigilPoints[i-1]; const p2 = sigilPoints[i];
+                    if (pathWeavingToggle.checked) { // Golden Flow
+                        const dx = p2.x - p1.x; const dy = p2.y - p1.y;
+                        const dist = Math.sqrt(dx*dx + dy*dy);
+                        const offsetScale = 0.35; // Determines "curviness"
+                        const cpOffset = dist * offsetScale;
+                        const midX = (p1.x + p2.x) / 2; const midY = (p1.y + p2.y) / 2;
+                        // Consistent curve direction (e.g., always "right" of path vector)
+                        const perpX = -dy / dist; const perpY = dx / dist; 
+                        const cpX = midX + perpX * cpOffset; const cpY = midY + perpY * cpOffset;
+                        ctx.quadraticCurveTo(cpX, cpY, p2.x, p2.y);
+                    } else { ctx.lineTo(p2.x, p2.y); } // Direct Current
+                }
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
+        
+        function handleIgniteSigil() {
+            const rawIntention = intentionInput.value;
+            const intentCheck = guardianOfIntent(rawIntention);
+             if (!intentCheck.positive || currentNumericalSequence.length === 0) {
+                geminiOutputEl.innerHTML = `<p>A clear, positive intention and a formed sigil are required to ignite.</p>`;
+                finalSigilImageEl.style.display = 'none'; return;
+            }
+            const userIntention = intentionInput.value;
+            const sigilImageDataUrl = sigilCanvas.toDataURL('image/png');
+            const chosenColor = lineColorPicker.value;
+            const masterPrompt = `Harness the intention: '${userIntention}'. From this sacred glyph [image provided], embodying the color ${chosenColor}, forge an ancient-futuristic sigil. It must be of high definition, print-ready, with a transparent background, radiating its encoded purpose.`;
+
+            geminiOutputEl.innerHTML = `<p>Igniting Sigil... Channeling cosmic energies through Gemini with prompt:</p>
+                                       <p style="font-size:0.85em; color:#ccc; background: rgba(255,255,255,0.05); padding: 8px; border-radius:5px;"><em>${masterPrompt}</em></p>
+                                       <p>(A true Gemini API invocation would occur now. Displaying the canvas sigil as a representation of this sacred act.)</p>`;
+            finalSigilImageEl.src = sigilImageDataUrl;
+            finalSigilImageEl.alt = "User-crafted Sigil (Representation of Gemini's Invocation)";
+            finalSigilImageEl.style.display = 'block';
+        }
+
+        // Event Listeners
+        intentionInput.addEventListener('input', processIntention);
+        essenceRefinementToggle.addEventListener('change', processIntention);
+        pathWeavingToggle.addEventListener('change', drawSigil);
+        [lineWeightSlider, lineColorPicker, rotationSlider].forEach(el => {
+            el.addEventListener('input', () => {
+                if(el.id === 'lineWeight') lineWeightValueEl.textContent = el.value;
+                if(el.id === 'rotation') rotationValueEl.textContent = el.value;
+                drawSigil();
+            });
+        });
+        igniteButton.addEventListener('click', handleIgniteSigil);
+        
+        window.addEventListener('load', () => {
+            initializeDurerSquareVisual(); setupCanvas(); processIntention();
+        });
+        window.addEventListener('resize', () => { setupCanvas(); drawSigil(); });
+    </script>
+</body>
+</html>
